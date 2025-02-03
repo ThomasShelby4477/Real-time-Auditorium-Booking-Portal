@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditorium Booking Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select, .form-group button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-group button {
+            background-color: #5cb85c;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #4cae4c;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .status.pending {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+        }
+        .status.error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>College Auditorium Booking Portal</h1>
+    </header>
+    <div class="container">
+        <form id="bookingForm">
+            <div class="form-group">
+                <label for="eventName">Event Name</label>
+                <input type="text" id="eventName" name="eventName" placeholder="Enter the event name" required>
+            </div>
+            <div class="form-group">
+                <label for="eventCoordinator">Co-ordinator</label>
+                <input type="text" id="eventCoordinator" name="eventCoordinator" placeholder="Co-ordinator" required>
+            </div>
+
+            <div class="form-group">
+                <label for="eventNumber">Contact Info</label>
+                <input type="number" id="eventNumber" name="eventNumber" placeholder="Mobile Number" required>
+            </div>
+
+            <div class="form-group">
+                <label for="eventDate">Event Date</label>
+                <input type="date" id="eventDate" name="eventDate" required>
+            </div>
+
+            <div class="form-group">
+                <label for="timeSlot">Time Slot</label>
+                <select id="timeSlot" name="timeSlot" required>
+                    <option value="">Select a time slot</option>
+                    <option value="9AM-12PM">10 AM - 12 PM</option>
+                    <option value="1PM-4PM">12 PM - 2 PM</option>
+                    <option value="5PM-8PM">2 PM - 4 PM</option>
+                    <option value="1PM-4PM">4 PM - 6 PM</option>
+                    <option value="5PM-8PM">6 PM - 8 PM</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit">Submit Booking Request</button>
+            </div>
+        </form>
+        <div id="statusMessage" class="status" style="display: none;"></div>
+    </div>
+    <script>
+        const bookingForm = document.getElementById('bookingForm');
+        const statusMessage = document.getElementById('statusMessage');
+
+        bookingForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const eventName = document.getElementById('eventName').value;
+            const eventDate = document.getElementById('eventDate').value;
+            const timeSlot = document.getElementById('timeSlot').value;
+            const eventNumber= document.getElementById('eventNumber').value;
+            const eventCoordinator= document.getElementById('eventCoordinator').value;
+
+            if (!eventName || !eventDate || !timeSlot || !eventNumber || !eventCoordinator) {
+                displayStatus('Please fill in all fields.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/checkAvailability', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ eventName, eventDate, timeSlot, eventNumber, eventCoordinator }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.isAvailable) {
+                    displayStatus('Your booking request is submitted and is now pending admin approval.', 'pending');
+                } else {
+                    displayStatus(result.message || 'Sorry, the auditorium is not available for the selected date and time slot.', 'error');
+                }
+            } catch (error) {
+                displayStatus('An error occurred while submitting your booking request. Please try again later.', 'error');
+            }
+        });
+
+        function displayStatus(message, status) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status ${status}`;
+            statusMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
